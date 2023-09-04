@@ -1,0 +1,33 @@
+import pathlib
+import typing
+
+import git
+from pydantic import BaseModel
+
+from git_file_keyword.exceptions import MaybeException
+
+
+class ExtractConfig(BaseModel):
+    depth: int = -1
+
+    repo_root: pathlib.Path = "."
+    file_list: typing.List[pathlib.Path] = []
+
+    def verify(self) -> MaybeException:
+        return self._verify_path() or self._verify_git()
+
+    def _verify_git(self) -> MaybeException:
+        try:
+            _ = git.Repo(self.repo_root)
+        except BaseException as e:
+            return e
+
+    def _verify_path(self) -> MaybeException:
+        root = pathlib.Path(self.repo_root)
+        real_file_list = [
+            pathlib.Path(root / each_file) for each_file in self.file_list
+        ]
+        for each_file in real_file_list:
+            if not each_file.is_file():
+                return FileNotFoundError(each_file)
+        return None
