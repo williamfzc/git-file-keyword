@@ -1,3 +1,5 @@
+import pathlib
+
 import git
 
 from git_file_keyword.config import ExtractConfig
@@ -23,23 +25,24 @@ def get_commits_diff(repo_path, start_commit_ref, end_commit_ref):
 
     stopwords = set()
     for each_file in (
-            "../assets/baidu_stopwords.txt",
-            "../assets/cn_stopwords.txt",
-            "../assets/thirdparty_stopwords.txt",
-            "../assets/bd_stopwords.txt"
+        "../assets/baidu_stopwords.txt",
+        "../assets/cn_stopwords.txt",
+        "../assets/thirdparty_stopwords.txt",
+        "../assets/bd_stopwords.txt",
     ):
-        with open(each_file) as f:
-            lines = f.readlines()
-            lines = [each.strip() for each in lines]
-            stopwords = stopwords.union(set(lines))
+        if pathlib.Path(each_file).is_file():
+            with open(each_file) as f:
+                lines = f.readlines()
+                lines = [each.strip() for each in lines]
+                stopwords = stopwords.union(set(lines))
 
     config = ExtractConfig()
     config.repo_root = repo_path
     config.file_list = changed_files
     config.stopword_set = stopwords
 
-    extractor = Extractor()
-    result = extractor.extract(config)
+    extractor = Extractor(config)
+    result = extractor.extract()
     with open("output.json", "w+", encoding="utf-8") as f:
         f.write(result.model_dump_json())
 
