@@ -13,6 +13,13 @@ class ExtractConfig(BaseModel):
     repo_root: pathlib.Path = "."
     file_list: typing.List[pathlib.Path] = []
 
+    stopword_set: typing.Set[str] = set()
+
+    ignore_low_freq_if_len: int = 20
+    ignore_low_freq: int = 1
+    max_tfidf_limit: int = 10
+
+
     def verify(self) -> MaybeException:
         return self._verify_path() or self._verify_git()
 

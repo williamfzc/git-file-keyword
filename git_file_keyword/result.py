@@ -7,10 +7,12 @@ from pydantic import BaseModel
 
 
 class FileResult(BaseModel):
-    commits: typing.List[Commit] = []
+    word_freq: typing.Dict[str, int] = dict()
+    tfidf: typing.Dict = dict()
+
+    _commits: typing.List[Commit] = []
 
     class Config:
-        exclude = {"commits"}
         arbitrary_types_allowed = True
 
 

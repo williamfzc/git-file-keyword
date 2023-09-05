@@ -29,5 +29,7 @@ setup(
     install_requires=[
         "pydantic==2.3.0",
         "GitPython==3.1.27",
+        "pkuseg",
+        "scikit-learn"
     ],
 )
