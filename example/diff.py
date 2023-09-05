@@ -23,7 +23,11 @@ def get_commits_diff(repo_path, start_commit_ref, end_commit_ref):
     # Get the list of changed files between start_commit and end_commit
     changed_files = [diff.b_path for diff in start_commit.diff(end_commit)]
 
-    stopwords = set()
+    config = ExtractConfig()
+    config.repo_root = repo_path
+    config.file_list = changed_files
+    extractor = Extractor(config)
+
     for each_file in (
         "../assets/baidu_stopwords.txt",
         "../assets/cn_stopwords.txt",
@@ -31,17 +35,8 @@ def get_commits_diff(repo_path, start_commit_ref, end_commit_ref):
         "../assets/bd_stopwords.txt",
     ):
         if pathlib.Path(each_file).is_file():
-            with open(each_file) as f:
-                lines = f.readlines()
-                lines = [each.strip() for each in lines]
-                stopwords = stopwords.union(set(lines))
+            extractor.add_stopwords_file(each_file)
 
-    config = ExtractConfig()
-    config.repo_root = repo_path
-    config.file_list = changed_files
-    config.stopword_set = stopwords
-
-    extractor = Extractor(config)
     result = extractor.extract()
     with open("output.json", "w+", encoding="utf-8") as f:
         f.write(result.model_dump_json())

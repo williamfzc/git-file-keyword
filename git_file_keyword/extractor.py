@@ -1,3 +1,4 @@
+import pathlib
 from collections import defaultdict, OrderedDict
 
 import git
@@ -8,10 +9,19 @@ from git_file_keyword.config import ExtractConfig
 from git_file_keyword.result import Result, FileResult
 
 
-class Extractor(object):
+class _ConfigBase(object):
     def __init__(self, config: ExtractConfig = None):
         self.config = config
 
+    def add_stopwords_file(self, txt: str):
+        txt_path = pathlib.Path(txt)
+        assert txt_path.is_file()
+        with txt_path.open() as f:
+            lines = [each.strip() for each in f.readlines()]
+            self.config.stopword_set = self.config.stopword_set.union(set(lines))
+
+
+class Extractor(_ConfigBase):
     def extract(self) -> Result:
         err = self.config.verify()
         if err:
@@ -19,6 +29,8 @@ class Extractor(object):
 
         result = Result()
         repo = git.Repo(self.config.repo_root)
+
+        # words from commit msg
         for file_path in self.config.file_list:
             cur_file_result = result.file_results[file_path]
 

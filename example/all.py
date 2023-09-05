@@ -6,7 +6,10 @@ import pathlib
 from git_file_keyword.config import ExtractConfig
 from git_file_keyword.extractor import Extractor
 
-stopwords = set()
+config = ExtractConfig()
+config.repo_root = "../../jvm-sandbox"
+extractor = Extractor(config)
+
 for each_file in (
     "../assets/baidu_stopwords.txt",
     "../assets/cn_stopwords.txt",
@@ -14,23 +17,16 @@ for each_file in (
     "../assets/bd_stopwords.txt",
 ):
     if pathlib.Path(each_file).is_file():
-        with open(each_file) as f:
-            lines = f.readlines()
-            lines = [each.strip() for each in lines]
-            stopwords = stopwords.union(set(lines))
+        extractor.add_stopwords_file(each_file)
 
-config = ExtractConfig()
-config.repo_root = ".."
-
-file_paths = glob.glob(os.path.join(config.repo_root, "**/*.tsx"), recursive=True)
+file_paths = glob.glob(os.path.join(config.repo_root, "**/*.java"), recursive=True)
 file_paths = [file_path for file_path in file_paths if "node_modules" not in file_path]
 
-file_paths = file_paths[:50]
+file_paths = file_paths[:10]
 
 config.file_list = [
     os.path.relpath(file_path, config.repo_root) for file_path in file_paths
 ]
-config.stopword_set = stopwords
 
 extractor = Extractor(config)
 result = extractor.extract()
