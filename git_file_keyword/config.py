@@ -28,6 +28,6 @@ class ExtractConfig(BaseModel):
             pathlib.Path(root / each_file) for each_file in self.file_list
         ]
         for each_file in real_file_list:
-            if not each_file.is_file():
+            if not each_file.exists():
                 return FileNotFoundError(each_file)
         return None
