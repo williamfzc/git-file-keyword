@@ -9,7 +9,7 @@ from pydantic import BaseModel
 class FileResult(BaseModel):
     path: str = ""
     word_freq: typing.Dict[str, int] = dict()
-    tfidf: typing.Dict = dict()
+    tfidf: typing.Dict[str, float] = dict()
 
     _commits: typing.List[Commit] = []
 

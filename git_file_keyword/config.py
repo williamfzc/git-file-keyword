@@ -32,9 +32,10 @@ class ExtractConfig(BaseModel):
     def _verify_path(self) -> MaybeException:
         root = pathlib.Path(self.repo_root)
         real_file_list = [
-            pathlib.Path(root / each_file) for each_file in self.file_list
+            pathlib.Path(each_file) for each_file in self.file_list
         ]
         for each_file in real_file_list:
-            if not each_file.exists():
+            if not (root / each_file).exists():
                 return FileNotFoundError(each_file)
+        self.file_list = real_file_list
         return None
