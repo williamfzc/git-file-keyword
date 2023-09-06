@@ -29,7 +29,8 @@ setup(
     install_requires=[
         "pydantic==2.3.0",
         "GitPython==3.1.27",
-        "pkuseg==0.0.25",
-        "scikit-learn==1.0.2",
+        "scikit-learn==1.3.0",
+        "loguru==0.7.1",
+        "jieba_fast==0.53",
     ],
 )

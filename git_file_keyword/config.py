@@ -17,7 +17,8 @@ class ExtractConfig(BaseModel):
 
     ignore_low_freq_if_len: int = 20
     ignore_low_freq: int = 1
-    max_tfidf_limit: int = 10
+    max_tfidf_feature_length: int = 20
+    max_word_length: int = 32
 
     def verify(self) -> MaybeException:
         return self._verify_path() or self._verify_git()

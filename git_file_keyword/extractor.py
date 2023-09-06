@@ -2,7 +2,8 @@ import pathlib
 from collections import defaultdict, OrderedDict
 
 import git
-import pkuseg
+import jieba_fast as jieba
+from loguru import logger
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from git_file_keyword.config import ExtractConfig
@@ -11,7 +12,7 @@ from git_file_keyword.result import Result, FileResult
 
 class _ConfigBase(object):
     def __init__(self, config: ExtractConfig = None):
-        self.config = config
+        self.config = config or ExtractConfig()
 
     def add_stopwords_file(self, txt: str):
         txt_path = pathlib.Path(txt)
@@ -26,6 +27,7 @@ class Extractor(_ConfigBase):
         err = self.config.verify()
         if err:
             raise err
+        logger.info("config validation ok")
 
         result = Result()
         repo = git.Repo(self.config.repo_root)
@@ -33,6 +35,7 @@ class Extractor(_ConfigBase):
         # words from commit msg
         for file_path in self.config.file_list:
             cur_file_result = result.file_results[file_path]
+            cur_file_result.path = file_path
 
             kwargs = {
                 "paths": file_path,
@@ -42,28 +45,40 @@ class Extractor(_ConfigBase):
 
             for commit in repo.iter_commits(**kwargs):
                 cur_file_result._commits.append(commit)
+
             self._extract_word_freq(cur_file_result)
 
         # tf-idf
+        logger.info("calc tfidf ...")
         self._calculate_tfidf(result)
+
+        logger.info("ok")
         return result
 
     def _extract_word_freq(self, file_result: FileResult):
         word_freq = defaultdict(int)
-        seg = pkuseg.pkuseg(postag=True)
 
+        text = []
         for commit in file_result._commits:
-            tokens = seg.cut(commit.message.strip())
-            for each in tokens:
-                name, characteristic = each[0], each[1]
+            text.append(commit.message.strip())
 
-                # stopwords
-                if name in self.config.stopword_set:
-                    continue
+        text_str = "\n".join(text)
+        tokens = jieba.cut(text_str)
+        for each in tokens:
+            name = each.strip()
 
-                # only noun, but current segment is not good enough
-                if "n" in characteristic:
-                    word_freq[name] += 1
+            # stopwords
+            if name in self.config.stopword_set:
+                continue
+
+            # too long
+            if len(name) > self.config.max_word_length:
+                continue
+
+            word_freq[name] += 1
+
+        logger.info(
+            f"extract {file_result.path}, related commits: {len(file_result._commits)}, text: {len(text_str)}, token: {len(word_freq)}")
 
         # reduce noice
         if len(word_freq) > self.config.ignore_low_freq_if_len:
@@ -96,7 +111,7 @@ class Extractor(_ConfigBase):
             nonzero_indices = tfidf_vector.nonzero()[1]
             tfidf_scores = tfidf_vector.data
 
-            sorted_indices = tfidf_scores.argsort()[::-1][: self.config.max_tfidf_limit]
+            sorted_indices = tfidf_scores.argsort()[::-1][: self.config.max_tfidf_feature_length]
             cur_tfidf_dict = dict()
             for index in sorted_indices:
                 word = feature_names[nonzero_indices[index]]
