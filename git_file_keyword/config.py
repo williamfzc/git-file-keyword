@@ -2,6 +2,7 @@ import pathlib
 import typing
 
 import git
+import jieba_fast
 from pydantic import BaseModel
 
 from git_file_keyword.exception import MaybeException
@@ -13,6 +14,7 @@ class ExtractConfig(BaseModel):
     repo_root: pathlib.Path = "."
     file_list: typing.List[pathlib.Path] = []
 
+    cutter_func: typing.Callable[[str], typing.Iterable[str]] = lambda x: jieba_fast.cut(x)
     stopword_set: typing.Set[str] = set()
 
     ignore_low_freq_if_len: int = 20

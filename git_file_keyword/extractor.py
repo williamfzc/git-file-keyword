@@ -63,7 +63,7 @@ class Extractor(_ConfigBase):
             text.append(commit.message.strip())
 
         text_str = "\n".join(text)
-        tokens = jieba.cut(text_str)
+        tokens = self.config.cutter_func(text_str)
         for each in tokens:
             name = each.strip()
 
