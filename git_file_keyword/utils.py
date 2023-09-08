@@ -1,3 +1,5 @@
+import hashlib
+import pathlib
 from collections import defaultdict
 
 
@@ -8,3 +10,9 @@ def merge_word_freq(dict1, dict2):
     for word, freq in dict2.items():
         merged_dict[word] += freq
     return merged_dict
+
+
+def calc_checksum(fp: pathlib.Path):
+    with fp.open(mode="rb") as f:
+        hasher = hashlib.new("sha1", f.read())
+        return hasher.hexdigest()

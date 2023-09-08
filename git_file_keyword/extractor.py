@@ -1,13 +1,15 @@
+import os
 import pathlib
+import typing
 from collections import defaultdict, OrderedDict
 
 import git
-import jieba_fast as jieba
 from loguru import logger
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from git_file_keyword.config import ExtractConfig
 from git_file_keyword.result import Result, FileResult
+from git_file_keyword.utils import calc_checksum
 
 
 class _ConfigBase(object):
@@ -22,31 +24,94 @@ class _ConfigBase(object):
             self.config.stopword_set = self.config.stopword_set.union(set(lines))
 
 
-class Extractor(_ConfigBase):
+class _CacheBase(_ConfigBase):
+    def get_cache_dir(self) -> pathlib.Path:
+        # each git repo has its own .gfk_cache
+        ret = self.config.repo_root / ".gfk_cache"
+        ret.mkdir(exist_ok=True)
+        return ret
+
+    def get_cache_word_file(self) -> pathlib.Path:
+        return self.get_cache_dir() / "word.txt"
+
+    def write_fs(self, result: Result):
+        word = self.get_cache_word_file()
+        logger.debug(f"save result to cache: {word}")
+
+        with open(word, "w+", encoding="utf-8") as f:
+            for file_result in result.file_results.values():
+                f.write(file_result.model_dump_json() + os.linesep)
+
+    def read_fs(self) -> typing.Optional[Result]:
+        word = self.get_cache_word_file()
+        logger.info(f"load result from cache: {word}")
+
+        if not word.exists():
+            return None
+
+        result = Result()
+        with open(word, "r", encoding="utf-8") as f:
+            for line in f:
+                file_result: FileResult = FileResult.model_validate_json(line.strip())
+                result.file_results[pathlib.Path(file_result.path)] = file_result
+
+        return result
+
+
+class Extractor(_CacheBase):
     def extract(self) -> Result:
         err = self.config.verify()
         if err:
             raise err
         logger.info("config validation ok")
 
-        result = Result()
         repo = git.Repo(self.config.repo_root)
 
-        # words from commit msg
-        for file_path in self.config.file_list:
-            cur_file_result = result.file_results[file_path]
-            cur_file_result.path = file_path
+        # cache
+        result = self.read_fs()
+        if not result:
+            logger.info("no cache found")
+            result = Result()
 
+        # check tasks
+        file_todo: typing.List[FileResult] = []
+        for file_path in self.config.file_list:
+            if file_path not in result.file_results:
+                # new file
+                new_file_result = FileResult()
+                file_todo.append(new_file_result)
+
+                # result should be serializable
+                new_file_result.path = file_path.as_posix()
+                new_file_result.checksum = calc_checksum(
+                    self.config.repo_root / file_path
+                )
+                result.file_results[file_path] = new_file_result
+            else:
+                # old file, check checksum
+                cached_file_result = result.file_results[file_path]
+                cur_checksum = calc_checksum(self.config.repo_root / file_path)
+                if cached_file_result.checksum != cur_checksum:
+                    # should be renewed
+                    logger.info(f"{file_path} checksum mismatch, recalc")
+                    cached_file_result.clear()
+                    cached_file_result.checksum = cur_checksum
+
+        # word extract
+        for file_result in file_todo:
             kwargs = {
-                "paths": file_path,
+                "paths": file_result.path,
             }
             if self.config.depth != -1:
                 kwargs["max_count"] = self.config.depth
 
             for commit in repo.iter_commits(**kwargs):
-                cur_file_result._commits.append(commit)
+                file_result._commits.append(commit)
 
-            self._extract_word_freq(cur_file_result)
+            self._extract_word_freq(file_result)
+
+        # write cache
+        self.write_fs(result)
 
         # tf-idf
         logger.info("calc tfidf ...")
@@ -78,7 +143,8 @@ class Extractor(_ConfigBase):
             word_freq[name] += 1
 
         logger.info(
-            f"extract {file_result.path}, related commits: {len(file_result._commits)}, text: {len(text_str)}, token: {len(word_freq)}")
+            f"extract {file_result.path}, related commits: {len(file_result._commits)}, text: {len(text_str)}, token: {len(word_freq)}"
+        )
 
         # reduce noice
         if len(word_freq) > self.config.ignore_low_freq_if_len:
@@ -111,7 +177,9 @@ class Extractor(_ConfigBase):
             nonzero_indices = tfidf_vector.nonzero()[1]
             tfidf_scores = tfidf_vector.data
 
-            sorted_indices = tfidf_scores.argsort()[::-1][: self.config.max_tfidf_feature_length]
+            sorted_indices = tfidf_scores.argsort()[::-1][
+                : self.config.max_tfidf_feature_length
+            ]
             cur_tfidf_dict = dict()
             for index in sorted_indices:
                 word = feature_names[nonzero_indices[index]]

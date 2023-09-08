@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 class FileResult(BaseModel):
     path: str = ""
+    checksum: str = ""
     word_freq: typing.Dict[str, int] = dict()
     tfidf: typing.Dict[str, float] = dict()
 
@@ -15,6 +16,12 @@ class FileResult(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+    def clear(self):
+        self.checksum = ""
+        self.word_freq = dict()
+        self.tfidf = dict()
+        self._commits = []
 
 
 class Result(BaseModel):
