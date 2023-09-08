@@ -9,6 +9,7 @@ from pydantic import BaseModel
 class FileResult(BaseModel):
     path: str = ""
     checksum: str = ""
+
     word_freq: typing.Dict[str, int] = dict()
     tfidf: typing.Dict[str, float] = dict()
 

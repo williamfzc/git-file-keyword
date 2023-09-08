@@ -32,5 +32,7 @@ setup(
         "scikit-learn==1.3.0",
         "loguru==0.7.1",
         "jieba_fast==0.53",
+        "click==8.1.3",
     ],
+    entry_points={"console_scripts": ["gfk = git_file_keyword.cmd:main"]},
 )
