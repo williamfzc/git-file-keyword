@@ -24,7 +24,7 @@ def main(repo: str, output_csv: str, include: str):
         writer = csv.writer(csvfile)
 
         for k, v in result.file_results.items():
-            writer.writerow([k, *v.word_freq.keys()])
+            writer.writerow([k, *v.keywords])
 
 
 if __name__ == "__main__":

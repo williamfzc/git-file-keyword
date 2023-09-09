@@ -10,19 +10,18 @@ class FileResult(BaseModel):
     path: str = ""
     checksum: str = ""
 
+    # raw
     word_freq: typing.Dict[str, int] = dict()
-    tfidf: typing.Dict[str, float] = dict()
-
     _commits: typing.List[Commit] = []
+
+    # final result
+    keywords: typing.List[str] = list()
+
+    # plugin output
+    plugin_output: typing.Dict = dict()
 
     class Config:
         arbitrary_types_allowed = True
-
-    def clear(self):
-        self.checksum = ""
-        self.word_freq = dict()
-        self.tfidf = dict()
-        self._commits = []
 
 
 class Result(BaseModel):

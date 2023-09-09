@@ -1,13 +1,13 @@
 import os
 import pathlib
 import typing
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 
 import git
 from loguru import logger
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 from git_file_keyword.config import ExtractConfig
+from git_file_keyword.plugin import TfidfPlugin, BasePlugin
 from git_file_keyword.result import Result, FileResult
 from git_file_keyword.utils import calc_checksum
 
@@ -40,7 +40,7 @@ class _CacheBase(_ConfigBase):
 
         with open(word, "w+", encoding="utf-8") as f:
             for file_result in result.file_results.values():
-                f.write(file_result.model_dump_json() + os.linesep)
+                f.write(file_result.model_dump_json(exclude_unset=True) + os.linesep)
 
     def read_fs(self) -> typing.Optional[Result]:
         word = self.get_cache_word_file()
@@ -59,6 +59,8 @@ class _CacheBase(_ConfigBase):
 
 
 class Extractor(_CacheBase):
+    _default_plugins: typing.List[BasePlugin] = [TfidfPlugin()]
+
     def extract(self) -> Result:
         err = self.config.verify()
         if err:
@@ -94,8 +96,10 @@ class Extractor(_CacheBase):
                 if cached_file_result.checksum != cur_checksum:
                     # should be renewed
                     logger.info(f"{file_path} checksum mismatch, recalc")
-                    cached_file_result.clear()
-                    cached_file_result.checksum = cur_checksum
+                    new_file_result = FileResult()
+                    new_file_result.path = file_path.as_posix()
+                    new_file_result.checksum = cur_checksum
+                    result.file_results[file_path] = new_file_result
 
         # word extract
         for file_result in file_todo:
@@ -111,11 +115,14 @@ class Extractor(_CacheBase):
             self._extract_word_freq(file_result)
 
         # write cache
+        # why not cache the plugin outputs:
+        # because keywords based on the whole overview
+        # every changed single files may cause big difference
         self.write_fs(result)
 
-        # tf-idf
-        logger.info("calc tfidf ...")
-        self._calculate_tfidf(result)
+        # apply plugins
+        for each in self._default_plugins:
+            each.apply(self.config, result)
 
         logger.info("ok")
         return result
@@ -157,33 +164,3 @@ class Extractor(_CacheBase):
             file_result.word_freq = filtered_word_freq
         else:
             file_result.word_freq = word_freq
-
-    def _calculate_tfidf(self, result: Result):
-        # vocabulary
-        documents = {
-            k: " ".join(
-                [word for word, freq in v.word_freq.items() for _ in range(freq)]
-            )
-            for k, v in result.file_results.items()
-            if v.word_freq
-        }
-        documents = OrderedDict(sorted(documents.items()))
-
-        vectorizer = TfidfVectorizer()
-        tfidf_matrix = vectorizer.fit_transform(documents.values())
-        feature_names = vectorizer.get_feature_names_out()
-
-        for document_name, tfidf_vector in zip(documents.keys(), tfidf_matrix):
-            nonzero_indices = tfidf_vector.nonzero()[1]
-            tfidf_scores = tfidf_vector.data
-
-            sorted_indices = tfidf_scores.argsort()[::-1][
-                : self.config.max_tfidf_feature_length
-            ]
-            cur_tfidf_dict = dict()
-            for index in sorted_indices:
-                word = feature_names[nonzero_indices[index]]
-                score = tfidf_scores[index]
-                cur_tfidf_dict[word] = score
-
-            result.file_results[document_name].tfidf = cur_tfidf_dict
