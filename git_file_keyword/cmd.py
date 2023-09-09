@@ -11,12 +11,18 @@ from git_file_keyword.extractor import Extractor
 @click.option("--repo", default=".")
 @click.option("--output_csv", default="./output.csv")
 @click.option("--include", default="**")
-def main(repo: str, output_csv: str, include: str):
+@click.option("--stopword_txt", default="")
+def main(repo: str, output_csv: str, include: str, stopword_txt: str):
     extractor = Extractor()
     extractor.config.repo_root = repo
 
     file_paths = glob.glob(os.path.join(repo, include), recursive=True)
     extractor.config.file_list = file_paths
+
+    if stopword_txt:
+        stopword_txt_list = stopword_txt.split(",")
+        for each in stopword_txt_list:
+            extractor.add_stopwords_file(each)
 
     result = extractor.extract()
 
