@@ -27,23 +27,29 @@ class ExtractConfig(BaseModel):
     max_word_length: int = 32
 
     def verify(self) -> MaybeException:
-        return self._verify_path() or self._verify_git()
+        return self._verify_git() or self._verify_path()
 
     def _verify_git(self) -> MaybeException:
         try:
             _ = git.Repo(self.repo_root)
         except BaseException as e:
             return e
+        self.repo_root = pathlib.Path(self.repo_root)
 
     def _verify_path(self) -> MaybeException:
-        root = pathlib.Path(self.repo_root)
-        self.repo_root = root
+        git_repo = git.Repo(self.repo_root)
+        git_track_files = set([each[1].path for each in git_repo.index.iter_blobs()])
 
         real_file_list = [pathlib.Path(each_file) for each_file in self.file_list]
 
         final = []
         for each_file in real_file_list:
-            if (root / each_file).is_file():
-                final.append(each_file)
+            if not (self.repo_root / each_file).is_file():
+                continue
+
+            if each_file not in git_track_files:
+                continue
+            final.append(each_file)
+
         self.file_list = final
         return None
