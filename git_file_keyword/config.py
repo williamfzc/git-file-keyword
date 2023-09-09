@@ -5,6 +5,7 @@ import git
 import jieba_fast
 from pydantic import BaseModel
 
+from git_file_keyword import stopword
 from git_file_keyword.exception import MaybeException
 
 
@@ -18,7 +19,7 @@ class ExtractConfig(BaseModel):
     cutter_func: typing.Callable[
         [str], typing.Iterable[str]
     ] = lambda x: jieba_fast.cut(x)
-    stopword_set: typing.Set[str] = set()
+    stopword_set: typing.Set[str] = stopword.stopword_set
     ignore_low_freq_if_len: int = 20
     ignore_low_freq: int = 1
 
@@ -47,7 +48,7 @@ class ExtractConfig(BaseModel):
             if not (self.repo_root / each_file).is_file():
                 continue
 
-            if each_file not in git_track_files:
+            if each_file.as_posix() not in git_track_files:
                 continue
             final.append(each_file)
 
