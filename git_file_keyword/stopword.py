@@ -1,4 +1,6 @@
 from nltk.corpus import stopwords
+import ssl
+import nltk
 
 git_op_words = [
     "git",
@@ -68,8 +70,25 @@ angular_commit_types = [
 ]
 
 
+def get_nltk_default() -> set:
+    # setup nltk stopwords
+    # https://github.com/gunthercox/ChatterBot/issues/930#issuecomment-322111087
+    try:
+        _create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+    else:
+        ssl._create_default_https_context = _create_unverified_https_context
+
+    nltk.download("stopwords")
+    return set(stopwords.words("english"))
+
+
 def gen_stopword_set() -> set:
-    basic_words = set(stopwords.words("english"))
+    try:
+        basic_words = get_nltk_default()
+    except BaseException:
+        basic_words = set()
     return basic_words.union(git_op_words, angular_commit_types)
 
 
