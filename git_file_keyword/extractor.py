@@ -7,13 +7,16 @@ import git
 from loguru import logger
 
 from git_file_keyword.config import ExtractConfig
-from git_file_keyword.llm import OpenAILLMPlugin
 from git_file_keyword.plugin import TfidfPlugin, BasePlugin
 from git_file_keyword.result import Result, FileResult
 from git_file_keyword.utils import calc_checksum
 
 
 class _ConfigBase(object):
+    _plugins: typing.List[BasePlugin] = [
+        TfidfPlugin(),
+    ]
+
     def __init__(self, config: ExtractConfig = None):
         self.config = config or ExtractConfig()
 
@@ -24,6 +27,8 @@ class _ConfigBase(object):
             lines = [each.strip() for each in f.readlines()]
             self.config.stopword_set = self.config.stopword_set.union(set(lines))
 
+    def add_plugin(self, new_plugin: BasePlugin):
+        self._plugins.append(new_plugin)
 
 class _CacheBase(_ConfigBase):
     def get_cache_dir(self) -> pathlib.Path:
@@ -60,11 +65,6 @@ class _CacheBase(_ConfigBase):
 
 
 class Extractor(_CacheBase):
-    _plugins: typing.List[BasePlugin] = [
-        TfidfPlugin(),
-        # OpenAILLMPlugin(),
-    ]
-
     def extract(self) -> Result:
         err = self.config.verify()
         if err:
