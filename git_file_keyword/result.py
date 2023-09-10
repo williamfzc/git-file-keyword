@@ -37,4 +37,4 @@ class Result(BaseModel):
             # header
             writer.writerow(["File", "Keywords", "Description"])
             for k, v in self.file_results.items():
-                writer.writerow([k, ",".join(v.keywords), ""])
+                writer.writerow([k, "|".join(v.keywords), v.description or "N/A"])
