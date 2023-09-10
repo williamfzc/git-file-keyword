@@ -1,10 +1,10 @@
-import csv
 import glob
 import os
 
 import click
 
 from git_file_keyword.extractor import Extractor
+from git_file_keyword.plugin_llm import OpenAILLMPlugin
 
 
 @click.command()
@@ -12,7 +12,9 @@ from git_file_keyword.extractor import Extractor
 @click.option("--output_csv", default="./output.csv")
 @click.option("--include", default="**")
 @click.option("--stopword_txt", default="")
-def main(repo: str, output_csv: str, include: str, stopword_txt: str):
+@click.option("--openai_key", default="")
+def main(repo: str, output_csv: str, include: str, stopword_txt: str, openai_key: str):
+    # gfk --include "**/*.py" --openai_key="sk-***"
     extractor = Extractor()
     extractor.config.repo_root = repo
 
@@ -24,13 +26,14 @@ def main(repo: str, output_csv: str, include: str, stopword_txt: str):
         for each in stopword_txt_list:
             extractor.add_stopwords_file(each)
 
+    if openai_key:
+        # enable llm enhancement
+        openai_plugin = OpenAILLMPlugin()
+        openai_plugin.token = openai_key
+        extractor.add_plugin(openai_plugin)
+
     result = extractor.extract()
-
-    with open(output_csv, "w", newline="", encoding="utf-8-sig") as csvfile:
-        writer = csv.writer(csvfile)
-
-        for k, v in result.file_results.items():
-            writer.writerow([k, *v.keywords])
+    result.export_csv(output_csv)
 
 
 if __name__ == "__main__":

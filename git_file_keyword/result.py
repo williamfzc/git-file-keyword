@@ -1,3 +1,4 @@
+import csv
 import pathlib
 import typing
 from collections import defaultdict
@@ -16,6 +17,7 @@ class FileResult(BaseModel):
 
     # final result
     keywords: typing.List[str] = list()
+    description: str = ""
 
     # plugin output
     plugin_output: typing.Dict = dict()
@@ -26,3 +28,12 @@ class FileResult(BaseModel):
 
 class Result(BaseModel):
     file_results: typing.Dict[pathlib.Path, FileResult] = defaultdict(FileResult)
+
+    def export_csv(self, path: str):
+        with open(path, "w", newline="", encoding="utf-8-sig") as csvfile:
+            writer = csv.writer(csvfile)
+
+            # header
+            writer.writerow(["File", "Keywords", "Description"])
+            for k, v in self.file_results.items():
+                writer.writerow([k, ",".join(v.keywords), ""])

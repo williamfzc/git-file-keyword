@@ -1,5 +1,6 @@
 import itertools
 import pathlib
+import time
 import typing
 
 import openai
@@ -18,6 +19,7 @@ class Ask(BaseModel):
 
 
 class BaseLLMPlugin(BasePlugin):
+    # todo: LLM usage takes some money. Maybe the results should be cached.
     prompt = """
 Generate concise (<30 words) descriptions for each source file based on their associated keywords, 
 summarizing/guessing the function of each file. 
@@ -109,6 +111,7 @@ class BardLLMPlugin(BaseLLMPlugin):
 class OpenAILLMPlugin(BaseLLMPlugin):
     token = ""
     model = "gpt-3.5-turbo"
+    rate_limit_wait = 20
 
     def plugin_id(self) -> str:
         return "llm-openai"
@@ -118,7 +121,8 @@ class OpenAILLMPlugin(BaseLLMPlugin):
         answer_dict = dict()
         openai.api_key = self.token
 
-        for each_dir, each_ask in ask_dict.items():
+        logger.info(f"total llm requests to go: {len(ask_dict)}")
+        for cur, (each_dir, each_ask) in enumerate(ask_dict.items()):
             completion = openai.ChatCompletion.create(
                 model=self.model,
                 messages=[
@@ -147,10 +151,16 @@ class OpenAILLMPlugin(BaseLLMPlugin):
 
                 answer_dict[file_path] = description
 
+            # by default, trial api key rate limit: 3/min
+            # means 20s / request
+            logger.info(f"{cur+1}/{len(ask_dict)} finished, resp: {responses}")
+            time.sleep(self.rate_limit_wait)
+
         # update to result
         for each_path, each_desc in answer_dict.items():
             if each_path not in result.file_results:
                 logger.warning(f"{each_path} not in result")
                 continue
 
+            result.file_results[each_path].description = each_desc
             result.file_results[each_path].plugin_output[self.plugin_id()] = each_desc
