@@ -21,3 +21,8 @@ def calc_checksum(fp: pathlib.Path):
 
 def strip_symbol(origin: str) -> str:
     return re.sub(r"[^\w\s]", "", origin)
+
+
+def split_list(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]

@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from git_file_keyword.config import ExtractConfig
 from git_file_keyword.plugin import BasePlugin
 from git_file_keyword.result import Result, FileResult
+from git_file_keyword.utils import split_list
 
 
 class Ask(BaseModel):
@@ -52,14 +53,29 @@ Sample Output:
 
             logger.info(f"prepare llm response for {directory_path}")
             # send the group to AI
-            lines = [
-                f"- {filepath}: {list(result.keywords)}"
-                for filepath, result in group_dict.items()
-            ]
-            request_txt = "\n".join(lines)
-            ask_dict[directory_path] = Ask(
-                file_list=list(group_dict.keys()), request_txt=request_txt
-            )
+            if len(group_dict) < 10:
+                lines = [
+                    f"- {filepath}: {list(result.keywords)}"
+                    for filepath, result in group_dict.items()
+                ]
+                request_txt = "\n".join(lines)
+                ask_dict[directory_path] = Ask(
+                    file_list=list(group_dict.keys()), request_txt=request_txt
+                )
+            else:
+                # split into multi parts
+                chunks = list(split_list(list(group_dict.items()), 10))
+                for i, chunk in enumerate(chunks, start=1):
+                    lines = [
+                        f"- {filepath}: {list(result.keywords)}"
+                        for filepath, result in chunk
+                    ]
+                    request_txt = "\n".join(lines)
+
+                    ask_dict[pathlib.Path(f"{directory_path.as_posix()}_{i}")] = Ask(
+                        file_list=[filepath for filepath, _ in chunk],
+                        request_txt=request_txt,
+                    )
         return ask_dict
 
 
