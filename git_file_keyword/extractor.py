@@ -7,6 +7,7 @@ import git
 from loguru import logger
 
 from git_file_keyword.config import ExtractConfig
+from git_file_keyword.llm import OpenAILLMPlugin
 from git_file_keyword.plugin import TfidfPlugin, BasePlugin
 from git_file_keyword.result import Result, FileResult
 from git_file_keyword.utils import calc_checksum
@@ -59,7 +60,10 @@ class _CacheBase(_ConfigBase):
 
 
 class Extractor(_CacheBase):
-    _default_plugins: typing.List[BasePlugin] = [TfidfPlugin()]
+    _plugins: typing.List[BasePlugin] = [
+        TfidfPlugin(),
+        # OpenAILLMPlugin(),
+    ]
 
     def extract(self) -> Result:
         err = self.config.verify()
@@ -121,7 +125,7 @@ class Extractor(_CacheBase):
         self.write_fs(result)
 
         # apply plugins
-        for each in self._default_plugins:
+        for each in self._plugins:
             each.apply(self.config, result)
 
         logger.info("ok")

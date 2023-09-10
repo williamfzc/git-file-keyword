@@ -31,9 +31,13 @@ setup(
         "GitPython==3.1.27",
         "scikit-learn==1.3.0",
         "loguru==0.7.1",
-        "jieba_fast==0.53",
         "click==8.1.3",
         "nltk==3.8.1",
+        # llm
+        "bardapi==0.1.33",
+        "openai==0.28.0",
+        # for Chinese
+        "jieba_fast==0.53",
     ],
     entry_points={"console_scripts": ["gfk = git_file_keyword.cmd:main"]},
 )
