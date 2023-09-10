@@ -1,6 +1,4 @@
-from nltk.corpus import stopwords
-import ssl
-import nltk
+import pathlib
 
 git_op_words = [
     "git",
@@ -69,27 +67,75 @@ angular_commit_types = [
     "revert",
 ]
 
+meaningless_git = [
+    "commit",
+    "added",
+    "updated",
+    "fixed",
+    "removed",
+    "changed",
+    "closed",
+    "renamed",
+    "refactored",
+    "tested",
+    "document",
+    "docs",
+    "test",
+    "tests",
+    "bug",
+    "bugs",
+    "issue",
+    "issues",
+    "feature",
+    "features",
+    "improvement",
+    "improvements",
+    "build",
+    "builds",
+    "release",
+    "releases",
+    "patch",
+    "patches",
+    "hotfix",
+    "hotfixes",
+    "documentation",
+    "readme",
+    "README",
+    "changelog",
+    "CHANGELOG",
+    "changelogs",
+    "CHANGELOGS",
+    "bump",
+    "version",
+    "versions",
+    "major",
+    "minor",
+    "patch",
+    "prerelease",
+    "postrelease",
+    "class",
+    "function",
+    "method",
+    "variable",
+    "parameter",
+    "return",
+    "if",
+    "else",
+    "for",
+    "while",
+    "switch",
+    "case",
+    "try",
+    "catch",
+    "finally",
+]
 
-def get_nltk_default() -> set:
-    # setup nltk stopwords
-    # https://github.com/gunthercox/ChatterBot/issues/930#issuecomment-322111087
-    try:
-        _create_unverified_https_context = ssl._create_unverified_context
-    except AttributeError:
-        pass
-    else:
-        ssl._create_default_https_context = _create_unverified_https_context
-
-    nltk.download("stopwords")
-    return set(stopwords.words("english"))
+with open(pathlib.Path(__file__).parent / "data" / "stopword-iso.txt") as f:
+    iso_stopwords = set([s.strip() for s in f.readlines()])
 
 
 def gen_stopword_set() -> set:
-    try:
-        basic_words = get_nltk_default()
-    except BaseException:
-        basic_words = set()
-    return basic_words.union(git_op_words, angular_commit_types)
+    return iso_stopwords.union(git_op_words, angular_commit_types, meaningless_git)
 
 
 stopword_set = gen_stopword_set()
