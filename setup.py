@@ -28,7 +28,7 @@ setup(
     ],
     install_requires=[
         "pydantic==2.3.0",
-        "GitPython==3.1.27",
+        "GitPython==3.1.35",
         "scikit-learn==1.3.0",
         "loguru==0.7.1",
         "click==8.1.3",
