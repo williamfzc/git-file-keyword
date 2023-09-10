@@ -9,7 +9,7 @@ from loguru import logger
 from git_file_keyword.config import ExtractConfig
 from git_file_keyword.plugin import TfidfPlugin, BasePlugin
 from git_file_keyword.result import Result, FileResult
-from git_file_keyword.utils import calc_checksum
+from git_file_keyword.utils import calc_checksum, strip_symbol
 
 
 class _ConfigBase(object):
@@ -143,9 +143,12 @@ class Extractor(_CacheBase):
         text_str = "\n".join(text)
         tokens = self.config.cutter_func(text_str)
         for each in tokens:
-            name = each.strip()
+            name = strip_symbol(each.strip())
+            if not name:
+                continue
 
             # stopwords
+            name = name.lower()
             if name in self.config.stopword_set:
                 continue
 

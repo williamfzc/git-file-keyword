@@ -1,5 +1,6 @@
 import hashlib
 import pathlib
+import re
 from collections import defaultdict
 
 
@@ -16,3 +17,7 @@ def calc_checksum(fp: pathlib.Path):
     with fp.open(mode="rb") as f:
         hasher = hashlib.new("sha1", f.read())
         return hasher.hexdigest()
+
+
+def strip_symbol(origin: str) -> str:
+    return re.sub(r"[^\w\s]", "", origin)
