@@ -30,6 +30,7 @@ class _ConfigBase(object):
     def add_plugin(self, new_plugin: BasePlugin):
         self._plugins.append(new_plugin)
 
+
 class _CacheBase(_ConfigBase):
     def get_cache_dir(self) -> pathlib.Path:
         # each git repo has its own .gfk_cache
@@ -119,14 +120,15 @@ class Extractor(_CacheBase):
             self._extract_word_freq(file_result)
 
         # write cache
-        # why not cache the plugin outputs:
-        # because keywords based on the whole overview
-        # every changed single files may cause big difference
         self.write_fs(result)
 
         # apply plugins
+        # in plugins, dev can decide using cache or not by `FileResult.cached`
         for each in self._plugins:
             each.apply(self.config, result)
+
+        # update cache
+        self.write_fs(result)
 
         logger.info("ok")
         return result

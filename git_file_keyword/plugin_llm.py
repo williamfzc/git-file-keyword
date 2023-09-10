@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from git_file_keyword.config import ExtractConfig
 from git_file_keyword.plugin import BasePlugin
-from git_file_keyword.result import Result
+from git_file_keyword.result import Result, FileResult
 
 
 class Ask(BaseModel):
@@ -44,8 +44,13 @@ Sample Output:
 
         ask_dict = dict()
         for directory_path, group in groups:
-            group_dict = {k: v for k, v in group}
+            group_dict: typing.Dict[pathlib.Path, FileResult] = {k: v for k, v in group}
 
+            # if the whole group does not contain any changes, ignore it
+            if all((each.cached for each in group_dict.values())):
+                continue
+
+            logger.info(f"prepare llm response for {directory_path}")
             # send the group to AI
             lines = [
                 f"- {filepath}: {list(result.keywords)}"

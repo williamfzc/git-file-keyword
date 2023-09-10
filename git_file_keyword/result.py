@@ -10,6 +10,7 @@ from pydantic import BaseModel
 class FileResult(BaseModel):
     path: str = ""
     checksum: str = ""
+    cached: bool = False
 
     # raw
     word_freq: typing.Dict[str, int] = dict()
