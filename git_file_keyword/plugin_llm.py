@@ -115,8 +115,11 @@ class BardLLMPlugin(BaseLLMPlugin):
                 # model sometimes returns the name only
                 for each_valid_file_path in each_ask["file_list"]:
                     if file_path == each_valid_file_path.name:
-                        file_path = each_valid_file_path.as_posix()
+                        file_path = each_valid_file_path
                         break
+                else:
+                    # maybe it's correct ...
+                    file_path = pathlib.Path(file_path)
 
                 answer_dict[file_path] = description
 
@@ -167,8 +170,11 @@ class OpenAILLMPlugin(BaseLLMPlugin):
                 # model sometimes returns the name only
                 for each_valid_file_path in each_ask.file_list:
                     if file_path == each_valid_file_path.name:
-                        file_path = each_valid_file_path.as_posix()
+                        file_path = each_valid_file_path
                         break
+                else:
+                    # maybe it's correct ...
+                    file_path = pathlib.Path(file_path)
 
                 answer_dict[file_path] = description
 
