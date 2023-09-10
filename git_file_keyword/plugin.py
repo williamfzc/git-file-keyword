@@ -47,7 +47,7 @@ class TfidfPlugin(BasePlugin):
                 cur_tfidf_dict[word] = score
 
             cur_file_result = result.file_results[document_name]
-            cur_file_result.keywords = cur_tfidf_dict.keys()
+            cur_file_result.keywords = list(cur_tfidf_dict.keys())
             cur_file_result.plugin_output[self.plugin_id()] = cur_tfidf_dict
 
     def plugin_id(self) -> str:
