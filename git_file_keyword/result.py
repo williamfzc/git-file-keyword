@@ -38,3 +38,10 @@ class Result(BaseModel):
             writer.writerow(["File", "Keywords", "Description"])
             for k, v in self.file_results.items():
                 writer.writerow([k, "|".join(v.keywords), v.description or "N/A"])
+
+    def export_global_word_freq(self) -> dict:
+        merged_freq = dict()
+        for v in self.file_results.values():
+            for word, count in v.items():
+                merged_freq[word] = merged_freq.get(word, 0) + count
+        return merged_freq
