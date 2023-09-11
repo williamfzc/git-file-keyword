@@ -165,6 +165,10 @@ class Extractor(_CacheBase):
             if len(name) > self.config.max_word_length:
                 continue
 
+            # pure digit
+            if name.isdigit():
+                continue
+
             word_freq[name] += 1
 
         logger.info(
