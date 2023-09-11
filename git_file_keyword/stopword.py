@@ -130,12 +130,55 @@ meaningless_git = [
     "finally",
 ]
 
+opensource_repo = [
+    # psf/requests
+    "_",
+    "requests",
+    "python",
+    "rst",
+    "signed",
+    "support",
+    "proxy",
+    "github",
+    "authors",
+    "fixes",
+    "links",
+    "change",
+    "urllib3",
+    "link",
+    "__",
+    "setup",
+    "doc",
+    "response",
+    "file",
+    "advanced",
+    "cleanup",
+    "error",
+    "pytest",
+    "url",
+    "httpbin",
+    "code",
+    "json",
+    "update",
+    "updates",
+    "master",
+    "typo",
+    "src",
+    "data",
+    # psf/black
+    "type",
+    "authored",
+    "trailing",
+]
+
 with open(pathlib.Path(__file__).parent / "data" / "stopword-iso.txt") as f:
     iso_stopwords = set([s.strip() for s in f.readlines()])
 
 
 def gen_stopword_set() -> set:
-    return iso_stopwords.union(git_op_words, angular_commit_types, meaningless_git)
+    return iso_stopwords.union(
+        git_op_words, angular_commit_types, meaningless_git, opensource_repo
+    )
 
 
 stopword_set = gen_stopword_set()

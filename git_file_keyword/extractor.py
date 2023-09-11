@@ -152,24 +152,9 @@ class Extractor(_CacheBase):
         text_str = "\n".join(text)
         tokens = self.config.cutter_func(text_str)
         for each in tokens:
-            name = strip_symbol(each.strip())
-            if not name:
-                continue
-
-            # stopwords
-            name = name.lower()
-            if name in self.config.stopword_set:
-                continue
-
-            # too long
-            if len(name) > self.config.max_word_length:
-                continue
-
-            # pure digit
-            if name.isdigit():
-                continue
-
-            word_freq[name] += 1
+            name = self.filter_name(each)
+            if name:
+                word_freq[name] += 1
 
         logger.info(
             f"extract {file_result.path}, related commits: {len(file_result._commits)}, text: {len(text_str)}, token: {len(word_freq)}"
@@ -186,3 +171,23 @@ class Extractor(_CacheBase):
             file_result.word_freq = filtered_word_freq
         else:
             file_result.word_freq = word_freq
+
+    def filter_name(self, name: str) -> str:
+        name = strip_symbol(name.strip())
+        if not name:
+            return ""
+
+        # stopwords
+        name = name.lower()
+        if name in self.config.stopword_set:
+            return ""
+
+        # too long
+        if len(name) > self.config.max_word_length:
+            return ""
+
+        # pure digit
+        if name.isdigit():
+            return ""
+
+        return name
