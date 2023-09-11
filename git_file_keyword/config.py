@@ -1,9 +1,12 @@
+import glob
+import os
 import pathlib
 import typing
 
 import git
 import jieba_fast
 from pydantic import BaseModel
+from loguru import logger
 
 from git_file_keyword import stopword
 from git_file_keyword.exception import MaybeException
@@ -44,7 +47,19 @@ class ExtractConfig(BaseModel):
         git_repo = git.Repo(self.repo_root)
         git_track_files = set([each[1].path for each in git_repo.index.iter_blobs()])
 
-        real_file_list = [pathlib.Path(each_file).relative_to(self.repo_root) for each_file in self.file_list]
+        if not self.file_list:
+            logger.debug("file list is empty, use **/* instead")
+            self.file_list = [
+                pathlib.Path(each)
+                for each in glob.glob(
+                    os.path.join(self.repo_root, "**/*"), recursive=True
+                )
+            ]
+
+        real_file_list = [
+            pathlib.Path(each_file).relative_to(self.repo_root)
+            for each_file in self.file_list
+        ]
 
         final = []
         for each_file in real_file_list:
