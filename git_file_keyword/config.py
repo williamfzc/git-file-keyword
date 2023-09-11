@@ -41,7 +41,7 @@ class ExtractConfig(BaseModel):
             _ = git.Repo(self.repo_root)
         except BaseException as e:
             return e
-        self.repo_root = pathlib.Path(self.repo_root)
+        self.repo_root = pathlib.Path(self.repo_root).resolve()
 
     def _verify_path(self) -> MaybeException:
         git_repo = git.Repo(self.repo_root)
@@ -50,16 +50,19 @@ class ExtractConfig(BaseModel):
         if not self.file_list:
             logger.debug("file list is empty, use **/* instead")
             self.file_list = [
-                pathlib.Path(each)
+                pathlib.Path(each).resolve()
                 for each in glob.glob(
                     os.path.join(self.repo_root, "**/*"), recursive=True
                 )
             ]
 
-        real_file_list = [
-            pathlib.Path(each_file).relative_to(self.repo_root)
-            for each_file in self.file_list
-        ]
+        # file_list can be rel/abs
+        real_file_list = []
+        for each_file in self.file_list:
+            each_file = pathlib.Path(each_file)
+            if each_file.is_absolute():
+                each_file = pathlib.Path(each_file).relative_to(self.repo_root)
+            real_file_list.append(each_file)
 
         final = []
         for each_file in real_file_list:
