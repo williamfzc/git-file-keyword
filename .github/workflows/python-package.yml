@@ -16,17 +16,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: [ "3.9", "3.10", "3.11" ]
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: cmd
-      run: |
-        pip3 install .
-        gfk --include "**/*.py"
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: cmd
+        run: |
+          pip3 install .
+          gfk --include "**/*.py"
+      - name: example
+        run: |
+          cd example
+          python3 diff.py
+          python3 stopword_extractor.py
