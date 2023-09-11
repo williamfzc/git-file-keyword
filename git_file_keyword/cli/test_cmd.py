@@ -9,9 +9,9 @@ def test_main_function():
         main,
         [
             "--repo",
-            "..",
+            "/Users/bytedance/workspace/bd/bear-web",
             "--include",
-            "**/*.py",
+            "src/business/**/*.tsx",
             # "--openai_key",
             # "xxx",
         ],

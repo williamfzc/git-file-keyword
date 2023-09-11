@@ -39,5 +39,5 @@ setup(
         # for Chinese
         "jieba_fast==0.53",
     ],
-    entry_points={"console_scripts": ["gfk = git_file_keyword.cmd:main"]},
+    entry_points={"console_scripts": ["gfk = git_file_keyword.cli:main"]},
 )
