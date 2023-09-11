@@ -15,6 +15,9 @@ class ExtractConfig(BaseModel):
     repo_root: pathlib.Path = pathlib.Path(".")
     file_list: typing.List[pathlib.Path] = []
 
+    # if disabled, cache dir will be removed before run
+    cache_enabled: bool = True
+
     # cutter
     cutter_func: typing.Callable[
         [str], typing.Iterable[str]

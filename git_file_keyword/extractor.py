@@ -1,5 +1,6 @@
 import os
 import pathlib
+import shutil
 import typing
 from collections import defaultdict
 
@@ -64,6 +65,10 @@ class _CacheBase(_ConfigBase):
 
         return result
 
+    def clear_cache(self):
+        # careful !!
+        shutil.rmtree(self.get_cache_dir())
+
 
 class Extractor(_CacheBase):
     def extract(self) -> Result:
@@ -75,6 +80,8 @@ class Extractor(_CacheBase):
         repo = git.Repo(self.config.repo_root)
 
         # cache
+        if not self.config.cache_enabled:
+            self.clear_cache()
         result = self.read_fs()
         if not result:
             logger.info("no cache found")
