@@ -13,7 +13,15 @@ from git_file_keyword.plugin_llm import OpenAILLMPlugin
 @click.option("--include", default="**")
 @click.option("--stopword_txt", default="")
 @click.option("--openai_key", default="")
-def main(repo: str, output_csv: str, include: str, stopword_txt: str, openai_key: str):
+@click.option("--llm_rate_limit_wait", default="")
+def main(
+    repo: str,
+    output_csv: str,
+    include: str,
+    stopword_txt: str,
+    openai_key: str,
+    llm_rate_limit_wait: int,
+):
     # gfk --include "**/*.py" --openai_key="sk-***"
     extractor = Extractor()
     extractor.config.repo_root = repo
@@ -31,6 +39,9 @@ def main(repo: str, output_csv: str, include: str, stopword_txt: str, openai_key
         openai_plugin = OpenAILLMPlugin()
         openai_plugin.token = openai_key
         extractor.add_plugin(openai_plugin)
+
+        if llm_rate_limit_wait:
+            openai_plugin.rate_limit_wait = llm_rate_limit_wait
 
     result = extractor.extract()
     result.export_csv(output_csv)
