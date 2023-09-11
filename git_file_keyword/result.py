@@ -42,6 +42,6 @@ class Result(BaseModel):
     def export_global_word_freq(self) -> dict:
         merged_freq = dict()
         for v in self.file_results.values():
-            for word, count in v.items():
+            for word, count in v.word_freq.items():
                 merged_freq[word] = merged_freq.get(word, 0) + count
         return merged_freq
