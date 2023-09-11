@@ -107,7 +107,8 @@ class Extractor(_CacheBase):
                     result.file_results[file_path] = new_file_result
 
         # word extract
-        for file_result in file_todo:
+        total = len(file_todo)
+        for cur, file_result in enumerate(file_todo):
             kwargs = {
                 "paths": file_result.path,
             }
@@ -118,6 +119,7 @@ class Extractor(_CacheBase):
                 file_result._commits.append(commit)
 
             self._extract_word_freq(file_result)
+            logger.debug(f"progress: {cur + 1}/{total}")
 
         # write cache
         self.write_fs(result)
