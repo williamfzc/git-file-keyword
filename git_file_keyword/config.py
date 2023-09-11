@@ -41,7 +41,7 @@ class ExtractConfig(BaseModel):
         git_repo = git.Repo(self.repo_root)
         git_track_files = set([each[1].path for each in git_repo.index.iter_blobs()])
 
-        real_file_list = [pathlib.Path(each_file) for each_file in self.file_list]
+        real_file_list = [pathlib.Path(each_file).relative_to(self.repo_root) for each_file in self.file_list]
 
         final = []
         for each_file in real_file_list:
