@@ -27,12 +27,18 @@ summarizing/guessing the function of each file.
 Avoid comments, quotes, or explanations.
 
 Sample Input:
+
+```
 - somedir/clipboard.java: cut, paste, auto-sync
 - somedir/webview.java: ...
+```
 
 Sample Output:
+
+```
 - somedir/clipboard.java: A auto-sync clipboard implementation contains cut/paste.
 - somedir/webview.java: ...
+```
         """
 
     def plugin_id(self) -> str:
