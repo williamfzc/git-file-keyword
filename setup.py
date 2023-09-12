@@ -22,7 +22,7 @@ setup(
     include_package_data=True,
     license=__LICENSE__,
     classifiers=[
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: Apache License 2.0",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
     ],
