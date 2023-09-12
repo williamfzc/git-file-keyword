@@ -1,5 +1,6 @@
 import glob
 import os
+import pathlib
 
 import click
 
@@ -14,6 +15,7 @@ from git_file_keyword.plugin_llm import OpenAILLMPlugin
 @click.option("--stopword_txt", default="")
 @click.option("--openai_key", default="")
 @click.option("--llm_rate_limit_wait", default="")
+@click.option("--cache_enabled", default=True)
 def main(
     repo: str,
     output_csv: str,
@@ -21,13 +23,17 @@ def main(
     stopword_txt: str,
     openai_key: str,
     llm_rate_limit_wait: int,
+    cache_enabled: bool,
 ):
     # gfk --include "**/*.py" --openai_key="sk-***"
     extractor = Extractor()
+
+    repo = pathlib.Path(repo).resolve().absolute()
     extractor.config.repo_root = repo
 
-    file_paths = glob.glob(os.path.join(repo, include), recursive=True)
+    file_paths = glob.glob(os.path.join(repo.as_posix(), include), recursive=True)
     extractor.config.file_list = file_paths
+    extractor.config.cache_enabled = cache_enabled
 
     if stopword_txt:
         stopword_txt_list = stopword_txt.split(",")
