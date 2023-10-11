@@ -45,14 +45,15 @@ Sample Output:
         return "llm"
 
     def gen_ask_group(self, result: Result) -> typing.Dict[pathlib.Path, Ask]:
-        groups = itertools.groupby(
-            result.file_results.items(), key=lambda x: x[0].parent
-        )
+        merged_dict: typing.Dict[pathlib.Path, typing.Dict[pathlib.Path, FileResult]] = {}
+        for file_path, file_result in result.file_results.items():
+            dir_path = file_path.parent
+            if dir_path not in merged_dict:
+                merged_dict[dir_path] = dict()
+            merged_dict[dir_path][file_path] = file_result
 
         ask_dict = dict()
-        for directory_path, group in groups:
-            group_dict: typing.Dict[pathlib.Path, FileResult] = {k: v for k, v in group}
-
+        for directory_path, group_dict in merged_dict.items():
             # if the whole group does not contain any changes, ignore it
             if all((each.cached for each in group_dict.values())):
                 continue
@@ -186,7 +187,7 @@ class OpenAILLMPlugin(BaseLLMPlugin):
 
             # by default, trial api key rate limit: 3/min
             # means 20s / request
-            logger.info(f"{cur+1}/{len(ask_dict)} finished, resp: {responses}")
+            logger.info(f"{cur + 1}/{len(ask_dict)} finished, resp: {responses}")
             time.sleep(self.rate_limit_wait)
 
         # update to result
