@@ -32,11 +32,10 @@ setup(
         "scikit-learn>=1.0.2",
         "loguru>=0.7.0",
         "click==8.1.3",
-        "nltk==3.8.1",
+        "keybert==0.8.3",
         # llm
         "bardapi==0.1.33",
         "openai==0.28.0",
-        "keybert==0.8.3",
     ],
     entry_points={"console_scripts": ["gfk = git_file_keyword.cli:main"]},
 )

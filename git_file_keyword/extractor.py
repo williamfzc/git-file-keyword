@@ -127,7 +127,10 @@ class Extractor(_CacheBase):
                 file_result._commits.append(commit)
 
             self._extract_word_freq(file_result)
-            logger.debug(f"progress: {cur + 1}/{total}")
+            logger.debug(f"progress: {cur + 1}/{total}, "
+                         f"file: {file_result.path}, "
+                         f"related commits: {len(file_result._commits)}, "
+                         f"token: {len(file_result.word_freq)}")
 
         # write cache
         self.write_fs(result)
@@ -169,12 +172,6 @@ class Extractor(_CacheBase):
             name = self.filter_name(each)
             if name:
                 word_freq[name] += 1
-
-        logger.info(
-            f"extract {file_result.path}, "
-            f"related commits: {len(file_result._commits)}, "
-            f"token: {len(word_freq)}"
-        )
 
         # reduce noice
         if len(word_freq) > self.config.ignore_low_freq_if_len:
