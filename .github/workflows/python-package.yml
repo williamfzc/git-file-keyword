@@ -33,5 +33,4 @@ jobs:
       - name: example
         run: |
           cd example
-          python3 diff.py
           python3 stopword_extractor.py

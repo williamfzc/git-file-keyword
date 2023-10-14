@@ -157,16 +157,23 @@ class Extractor(_CacheBase):
         stopword_list = list(self.config.stopword_set)
 
         tokens = set()
+        commit_msg_list = list()
         for commit in file_result._commits:
             commit_msg = commit.message.strip()
-            keywords = kw_model.extract_keywords(
-                commit_msg,
-                stop_words=stopword_list,
-                top_n=self.config.keybert_keyword_limit,
-            )
+            commit_msg_list.append(commit_msg)
 
-            for each in keywords:
-                tokens.add(each[0])
+        keywords_list = kw_model.extract_keywords(
+            commit_msg_list,
+            stop_words=stopword_list,
+            use_mmr=True,
+            top_n=self.config.keybert_keyword_limit,
+        )
+        for each_keywords in keywords_list:
+            if isinstance(each_keywords, tuple):
+                tokens.add(each_keywords[0])
+            else:
+                for each_keyword in each_keywords:
+                    tokens.add(each_keyword[0])
 
         for each in tokens:
             name = self.filter_name(each)

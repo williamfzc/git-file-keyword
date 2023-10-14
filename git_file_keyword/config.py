@@ -10,6 +10,10 @@ from loguru import logger
 from git_file_keyword import stopword
 from git_file_keyword.exception import MaybeException
 
+# https://maartengr.github.io/KeyBERT/faq.html#which-embedding-model-works-best-for-which-language
+MODEL_KEYBERT_DEFAULT = 'all-MiniLM-L6-v2'
+MODEL_KEYBERT_MULTI_LANGS = 'paraphrase-multilingual-MiniLM-L12-v2'
+
 
 class ExtractConfig(BaseModel):
     repo_root: pathlib.Path = pathlib.Path(".")
@@ -20,8 +24,8 @@ class ExtractConfig(BaseModel):
     stopword_set: typing.Set[str] = stopword.stopword_set
 
     # extractor algo
-    keybert_model: str = 'all-MiniLM-L6-v2'
-    keybert_keyword_limit: int = 10
+    keybert_model: str = MODEL_KEYBERT_DEFAULT
+    keybert_keyword_limit: int = 16
     max_word_length: int = 32
     max_depth_limit: int = 128
 
