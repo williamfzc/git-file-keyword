@@ -102,9 +102,7 @@ meaningless_git = [
     "readme",
     "README",
     "changelog",
-    "CHANGELOG",
     "changelogs",
-    "CHANGELOGS",
     "bump",
     "version",
     "versions",
@@ -171,13 +169,16 @@ opensource_repo = [
     "trailing",
 ]
 
+# from sklearn (can not handle
+warning_tokens = ['ain', 'bits', 'blank', 'cherry', 'daren', 'eof', 'eol', 'errors', 'hadn', 'herse', 'himse', 'itse', 'lines', 'mayn', 'mightn', 'missing', 'mon', 'mustn', 'myse', 'needn', 'option', 'oughtn', 'paths', 'pick', 'shan', 'skip', 'space', 'submodules', 'untracked', 'whitespace', 'worktree', 'worktrees']
+
 with open(pathlib.Path(__file__).parent / "data" / "stopword-iso.txt") as f:
     iso_stopwords = set([s.strip() for s in f.readlines()])
 
 
 def gen_stopword_set() -> set:
     return iso_stopwords.union(
-        git_op_words, angular_commit_types, meaningless_git, opensource_repo
+        git_op_words, angular_commit_types, meaningless_git, opensource_repo, warning_tokens
     )
 
 

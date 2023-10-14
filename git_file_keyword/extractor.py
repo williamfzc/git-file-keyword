@@ -150,11 +150,17 @@ class Extractor(_CacheBase):
         kw_model = KeyBERT(model=self.config.keybert_model)
         # supress warning
         os.putenv("TOKENIZERS_PARALLELISM", "False")
+        # convert to list for keybert
+        stopword_list = list(self.config.stopword_set)
 
         tokens = set()
         for commit in file_result._commits:
             commit_msg = commit.message.strip()
-            keywords = kw_model.extract_keywords(commit_msg, top_n=self.config.keybert_keyword_limit)
+            keywords = kw_model.extract_keywords(
+                commit_msg,
+                stop_words=stopword_list,
+                top_n=self.config.keybert_keyword_limit,
+            )
 
             for each in keywords:
                 tokens.add(each[0])
