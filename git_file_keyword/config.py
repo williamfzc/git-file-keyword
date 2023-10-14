@@ -4,7 +4,6 @@ import pathlib
 import typing
 
 import git
-import jieba_fast
 from pydantic import BaseModel
 from loguru import logger
 
@@ -13,25 +12,26 @@ from git_file_keyword.exception import MaybeException
 
 
 class ExtractConfig(BaseModel):
-    depth: int = -1
-
     repo_root: pathlib.Path = pathlib.Path(".")
     file_list: typing.List[pathlib.Path] = []
 
     # if disabled, cache dir will be removed before run
     cache_enabled: bool = True
-
-    # cutter
-    cutter_func: typing.Callable[
-        [str], typing.Iterable[str]
-    ] = lambda x: jieba_fast.cut(x)
     stopword_set: typing.Set[str] = stopword.stopword_set
+
+    # extractor algo
+    keybert_model: str = 'all-MiniLM-L6-v2'
+    keybert_keyword_limit: int = 10
+    max_word_length: int = 32
+    max_depth_limit: int = 128
+
+    # if len(keywords) > 20
+    # remove words which freq == 1
     ignore_low_freq_if_len: int = 20
     ignore_low_freq: int = 1
 
-    # algo
+    # tfidf
     max_tfidf_feature_length: int = 20
-    max_word_length: int = 32
 
     def verify(self) -> MaybeException:
         return self._verify_git() or self._verify_path()

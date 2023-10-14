@@ -36,8 +36,7 @@ setup(
         # llm
         "bardapi==0.1.33",
         "openai==0.28.0",
-        # for Chinese
-        "jieba_fast==0.53",
+        "keybert==0.8.3",
     ],
     entry_points={"console_scripts": ["gfk = git_file_keyword.cli:main"]},
 )

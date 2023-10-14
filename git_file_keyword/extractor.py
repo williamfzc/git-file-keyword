@@ -5,6 +5,7 @@ import typing
 from collections import defaultdict
 
 import git
+from keybert import KeyBERT
 from loguru import logger
 
 from git_file_keyword.config import ExtractConfig
@@ -119,8 +120,8 @@ class Extractor(_CacheBase):
             kwargs = {
                 "paths": file_result.path,
             }
-            if self.config.depth != -1:
-                kwargs["max_count"] = self.config.depth
+            if self.config.max_depth_limit != -1:
+                kwargs["max_count"] = self.config.max_depth_limit
 
             for commit in repo.iter_commits(**kwargs):
                 file_result._commits.append(commit)
@@ -145,19 +146,28 @@ class Extractor(_CacheBase):
     def _extract_word_freq(self, file_result: FileResult):
         word_freq = defaultdict(int)
 
-        text = []
-        for commit in file_result._commits:
-            text.append(commit.message.strip())
+        # create model for extracting
+        kw_model = KeyBERT(model=self.config.keybert_model)
+        # supress warning
+        os.putenv("TOKENIZERS_PARALLELISM", "False")
 
-        text_str = "\n".join(text)
-        tokens = self.config.cutter_func(text_str)
+        tokens = set()
+        for commit in file_result._commits:
+            commit_msg = commit.message.strip()
+            keywords = kw_model.extract_keywords(commit_msg, top_n=self.config.keybert_keyword_limit)
+
+            for each in keywords:
+                tokens.add(each[0])
+
         for each in tokens:
             name = self.filter_name(each)
             if name:
                 word_freq[name] += 1
 
         logger.info(
-            f"extract {file_result.path}, related commits: {len(file_result._commits)}, text: {len(text_str)}, token: {len(word_freq)}"
+            f"extract {file_result.path}, "
+            f"related commits: {len(file_result._commits)}, "
+            f"token: {len(word_freq)}"
         )
 
         # reduce noice
