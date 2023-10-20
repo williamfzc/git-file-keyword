@@ -2,6 +2,7 @@ import glob
 import os
 import pathlib
 import typing
+from enum import Enum
 
 import git
 from pydantic import BaseModel
@@ -13,6 +14,11 @@ from git_file_keyword.exception import MaybeException
 # https://maartengr.github.io/KeyBERT/faq.html#which-embedding-model-works-best-for-which-language
 MODEL_KEYBERT_DEFAULT = 'all-MiniLM-L6-v2'
 MODEL_KEYBERT_MULTI_LANGS = 'paraphrase-multilingual-MiniLM-L12-v2'
+
+
+class FileLevelEnum(str, Enum):
+    FILE: str = "FILE"
+    DIR: str = "DIR"
 
 
 class ExtractConfig(BaseModel):
@@ -28,6 +34,7 @@ class ExtractConfig(BaseModel):
     keybert_keyword_limit: int = 16
     max_word_length: int = 32
     max_depth_limit: int = 128
+    file_level: FileLevelEnum = FileLevelEnum.FILE
 
     # if len(keywords) > 20
     # remove words which freq == 1

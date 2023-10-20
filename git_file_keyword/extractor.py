@@ -8,7 +8,7 @@ import git
 from keybert import KeyBERT
 from loguru import logger
 
-from git_file_keyword.config import ExtractConfig
+from git_file_keyword.config import ExtractConfig, FileLevelEnum
 from git_file_keyword.plugin import TfidfPlugin, BasePlugin
 from git_file_keyword.result import Result, FileResult
 from git_file_keyword.utils import calc_checksum, strip_symbol
@@ -115,22 +115,57 @@ class Extractor(_CacheBase):
                     result.file_results[file_path] = new_file_result
 
         # word extract
-        total = len(file_todo)
-        for cur, file_result in enumerate(file_todo):
-            kwargs = {
-                "paths": file_result.path,
-            }
-            if self.config.max_depth_limit != -1:
-                kwargs["max_count"] = self.config.max_depth_limit
+        if self.config.file_level == FileLevelEnum.FILE:
+            total = len(file_todo)
+            for cur, file_result in enumerate(file_todo):
+                kwargs = {
+                    "paths": file_result.path,
+                }
+                if self.config.max_depth_limit != -1:
+                    kwargs["max_count"] = self.config.max_depth_limit
 
-            for commit in repo.iter_commits(**kwargs):
-                file_result._commits.append(commit)
+                for commit in repo.iter_commits(**kwargs):
+                    file_result._commits.append(commit)
 
-            self._extract_word_freq(file_result)
-            logger.debug(f"progress: {cur + 1}/{total}, "
-                         f"file: {file_result.path}, "
-                         f"related commits: {len(file_result._commits)}, "
-                         f"token: {len(file_result.word_freq)}")
+                self._extract_word_freq_from_commits(file_result)
+                logger.debug(f"progress: {cur + 1}/{total}, "
+                             f"file: {file_result.path}, "
+                             f"related commits: {len(file_result._commits)}, "
+                             f"token: {len(file_result.word_freq)}")
+        else:
+            dir_dict: typing.Dict[str, typing.List[FileResult]] = dict()
+            for each in file_todo:
+                each_dir = os.path.dirname(each.path)
+                if each_dir not in dir_dict:
+                    dir_dict[each_dir] = []
+                dir_dict[each_dir].append(each)
+
+            cur = 0
+            total = len(dir_dict)
+            for each_dir, each_file_list in dir_dict.items():
+                # extract once for each dir
+                kwargs = {
+                    "paths": each_dir,
+                }
+                if self.config.max_depth_limit != -1:
+                    kwargs["max_count"] = self.config.max_depth_limit
+
+                related_commits = []
+                for commit in repo.iter_commits(**kwargs):
+                    related_commits.append(commit)
+                commit_msg_list = [
+                    each_commit.message.strip()
+                    for each_commit
+                    in related_commits
+                ]
+                word_freq = self._extract_word_freq_from_docs(commit_msg_list)
+                for each_file in each_file_list:
+                    each_file._commits = related_commits
+                    each_file.word_freq = word_freq
+                logger.debug(f"progress: {cur + 1}/{total}, "
+                             f"dir: {each_dir}, "
+                             f"related commits: {len(related_commits)}")
+                cur += 1
 
         # write cache
         self.write_fs(result)
@@ -146,8 +181,9 @@ class Extractor(_CacheBase):
         logger.info("ok")
         return result
 
-    def _extract_word_freq(self, file_result: FileResult):
+    def _extract_word_freq_from_docs(self, docs: typing.List[str]) -> dict:
         word_freq = defaultdict(int)
+        tokens = set()
 
         # create model for extracting
         kw_model = KeyBERT(model=self.config.keybert_model)
@@ -156,14 +192,8 @@ class Extractor(_CacheBase):
         # convert to list for keybert
         stopword_list = list(self.config.stopword_set)
 
-        tokens = set()
-        commit_msg_list = list()
-        for commit in file_result._commits:
-            commit_msg = commit.message.strip()
-            commit_msg_list.append(commit_msg)
-
         keywords_list = kw_model.extract_keywords(
-            commit_msg_list,
+            docs,
             stop_words=stopword_list,
             use_mmr=True,
             top_n=self.config.keybert_keyword_limit,
@@ -188,9 +218,18 @@ class Extractor(_CacheBase):
                 for word, freq in word_freq.items()
                 if freq > self.config.ignore_low_freq
             }
-            file_result.word_freq = filtered_word_freq
-        else:
-            file_result.word_freq = word_freq
+            return filtered_word_freq
+
+        return word_freq
+
+    def _extract_word_freq_from_commits(self, file_result: FileResult):
+        commit_msg_list = list()
+        for commit in file_result._commits:
+            commit_msg = commit.message.strip()
+            commit_msg_list.append(commit_msg)
+
+        word_freq = self._extract_word_freq_from_docs(commit_msg_list)
+        file_result.word_freq = word_freq
 
     def filter_name(self, name: str) -> str:
         name = strip_symbol(name.strip())
