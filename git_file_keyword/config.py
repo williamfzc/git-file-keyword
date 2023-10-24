@@ -37,9 +37,10 @@ class ExtractConfig(BaseModel):
     file_level: FileLevelEnum = FileLevelEnum.FILE
 
     # if len(keywords) > 20
-    # remove words which freq == 1
+    # remove words which freq <= 0
+    # by default remove nothing
     ignore_low_freq_if_len: int = 20
-    ignore_low_freq: int = 1
+    ignore_low_freq: int = 0
 
     # tfidf
     max_tfidf_feature_length: int = 20

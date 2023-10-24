@@ -164,7 +164,8 @@ class Extractor(_CacheBase):
                     each_file.word_freq = word_freq
                 logger.debug(f"progress: {cur + 1}/{total}, "
                              f"dir: {each_dir}, "
-                             f"related commits: {len(related_commits)}")
+                             f"related commits: {len(related_commits)}, "
+                             f"tokens: {len(word_freq)}")
                 cur += 1
 
         # write cache
