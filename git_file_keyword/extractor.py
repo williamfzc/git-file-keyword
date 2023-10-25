@@ -7,6 +7,8 @@ from collections import defaultdict
 import git
 from keybert import KeyBERT
 from loguru import logger
+from sklearn.feature_extraction.text import CountVectorizer
+import jieba
 
 from git_file_keyword.config import ExtractConfig, FileLevelEnum
 from git_file_keyword.plugin import TfidfPlugin, BasePlugin
@@ -193,11 +195,19 @@ class Extractor(_CacheBase):
         # convert to list for keybert
         stopword_list = list(self.config.stopword_set)
 
+        # https://maartengr.github.io/KeyBERT/faq.html#how-can-i-use-keybert-with-chinese-documents
+        def tokenize_zh(text):
+            words = jieba.lcut(text)
+            return words
+
+        vectorizer = CountVectorizer(tokenizer=tokenize_zh)
+
         keywords_list = kw_model.extract_keywords(
             docs,
             stop_words=stopword_list,
             use_mmr=True,
             top_n=self.config.keybert_keyword_limit,
+            vectorizer=vectorizer,
         )
         for each_keywords in keywords_list:
             if isinstance(each_keywords, tuple):
