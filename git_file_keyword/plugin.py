@@ -21,15 +21,14 @@ class TfidfPlugin(BasePlugin):
         logger.info("calc tfidf ...")
         # vocabulary
         documents = {
-            k: " ".join(
-                [word for word, freq in v.word_freq.items() for _ in range(freq)]
-            )
+            k: [word for word, freq in v.word_freq.items() for _ in range(freq)]
             for k, v in result.file_results.items()
             if v.word_freq
         }
         documents = OrderedDict(sorted(documents.items()))
 
-        vectorizer = TfidfVectorizer()
+        # https://stackoverflow.com/a/63859161
+        vectorizer = TfidfVectorizer(analyzer=lambda x: x)
         tfidf_matrix = vectorizer.fit_transform(documents.values())
         feature_names = vectorizer.get_feature_names_out()
 
@@ -38,8 +37,8 @@ class TfidfPlugin(BasePlugin):
             tfidf_scores = tfidf_vector.data
 
             sorted_indices = tfidf_scores.argsort()[::-1][
-                : config.max_tfidf_feature_length
-            ]
+                             : config.max_tfidf_feature_length
+                             ]
             cur_tfidf_dict = dict()
             for index in sorted_indices:
                 word = feature_names[nonzero_indices[index]]
