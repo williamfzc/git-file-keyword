@@ -33,7 +33,7 @@ setup(
         "loguru>=0.7.0",
         "click==8.1.3",
         "keybert==0.8.3",
-        "jieba==0.42.1",
+        "rjieba==0.1.11",
         # llm
         "bardapi==0.1.33",
         "openai==0.28.0",
