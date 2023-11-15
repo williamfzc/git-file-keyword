@@ -45,6 +45,9 @@ class ExtractConfig(BaseModel):
     # tfidf
     max_tfidf_feature_length: int = 20
 
+    # commit regex
+    commit_regex: str = ""
+
     def verify(self) -> MaybeException:
         return self._verify_git() or self._verify_path()
 

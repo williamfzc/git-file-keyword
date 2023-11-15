@@ -1,5 +1,6 @@
 import os
 import pathlib
+import re
 import shutil
 import typing
 from collections import defaultdict
@@ -133,6 +134,10 @@ class Extractor(_CacheBase):
                     result.file_results[file_path] = new_file_result
 
         # word extract
+        commit_regex = None
+        if self.config.commit_regex:
+            commit_regex = re.compile(self.config.commit_regex)
+
         if self.config.file_level == FileLevelEnum.FILE:
             total = len(file_todo)
             for cur, file_result in enumerate(file_todo):
@@ -143,7 +148,11 @@ class Extractor(_CacheBase):
                     kwargs["max_count"] = self.config.max_depth_limit
 
                 for commit in repo.iter_commits(**kwargs):
-                    file_result._commits.append(commit)
+                    if not commit_regex:
+                        file_result._commits.append(commit)
+                        continue
+                    if commit_regex.match(commit.message):
+                        file_result._commits.append(commit)
 
                 self._extract_word_freq_from_commits(file_result)
                 logger.debug(f"progress: {cur + 1}/{total}, "
@@ -170,7 +179,11 @@ class Extractor(_CacheBase):
 
                 related_commits = []
                 for commit in repo.iter_commits(**kwargs):
-                    related_commits.append(commit)
+                    if not commit_regex:
+                        related_commits.append(commit)
+                        continue
+                    if commit_regex.match(commit.message):
+                        related_commits.append(commit)
                 commit_msg_list = [
                     each_commit.message.strip()
                     for each_commit
