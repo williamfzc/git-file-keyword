@@ -27,16 +27,16 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     install_requires=[
-        "pydantic==2.3.0",
-        "GitPython==3.1.35",
+        "pydantic>=2.3.0",
+        "GitPython>=3.1.35",
         "scikit-learn>=1.0.2",
         "loguru>=0.7.0",
-        "click==8.1.3",
-        "keybert==0.8.3",
-        "rjieba==0.1.11",
+        "click>=8.1.3",
+        "keybert>=0.8.3",
+        "rjieba>=0.1.11",
         # llm
-        "bardapi==0.1.33",
-        "openai==0.28.0",
+        "bardapi>=0.1.33",
+        "openai>=0.28.0",
     ],
     entry_points={"console_scripts": ["gfk = git_file_keyword.cli:main"]},
 )
